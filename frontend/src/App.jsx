@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, Link } from 'react-router-dom';
 import axios from 'axios';
 import { Download, Upload } from 'lucide-react';
 import { format } from 'date-fns';
@@ -24,7 +24,6 @@ const ProtectedRoute = ({ children, authData }) => {
 function App() {
   const [questions, setQuestions] = useState([]);
   const [darkMode, setDarkMode] = useState(false);
-  const [editingQuestion, setEditingQuestion] = useState(null);
   const [viewMistakeQuestion, setViewMistakeQuestion] = useState(null);
   const [authData, setAuthData] = useState({ token: null, user: null });
   const [loading, setLoading] = useState(true);
@@ -96,11 +95,10 @@ function App() {
     }
   };
 
-  const handleUpdateQuestion = async (data) => {
+  const handleUpdateQuestion = async (data, id) => {
     try {
-      await axios.put(`${API_URL}/questions/${editingQuestion._id}`, data);
-      setQuestions(questions.map(q => q._id === editingQuestion._id ? { ...data, _id: editingQuestion._id } : q));
-      setEditingQuestion(null);
+      await axios.put(`${API_URL}/questions/${id}`, data);
+      setQuestions(questions.map(q => q._id === id ? { ...data, _id: id } : q));
     } catch (err) {
       console.error('Error updating question:', err);
     }
@@ -182,8 +180,17 @@ function App() {
           <Route path="/" element={
             <ProtectedRoute authData={authData}>
               <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-                <div className="flex justify-end mb-4">
-                  <div className="flex items-center gap-2">
+                <Dashboard questions={questions} darkMode={darkMode} />
+              </main>
+            </ProtectedRoute>
+          } />
+          
+          <Route path="/questions" element={
+            <ProtectedRoute authData={authData}>
+              <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+                <div className="flex justify-between items-center mb-6">
+                  <h2 className="text-2xl font-bold text-gray-900 dark:text-white">My Questions</h2>
+                  <div className="flex items-center gap-3">
                     <input 
                       type="file" 
                       ref={fileInputRef} 
@@ -193,33 +200,47 @@ function App() {
                     />
                     <button 
                       onClick={() => fileInputRef.current.click()}
-                      className="flex items-center gap-2 text-sm text-gray-600 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 px-3 py-1.5 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                      className="flex items-center gap-2 text-sm font-medium text-gray-600 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 px-3 py-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors shadow-sm"
                     >
-                      <Upload className="w-4 h-4" /> Import
+                      <Upload className="w-4 h-4" /> <span className="hidden sm:inline">Import</span>
                     </button>
                     <button 
                       onClick={handleExport}
-                      className="flex items-center gap-2 text-sm text-gray-600 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 px-3 py-1.5 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                      className="flex items-center gap-2 text-sm font-medium text-gray-600 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 px-3 py-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors shadow-sm"
                     >
-                      <Download className="w-4 h-4" /> Export
+                      <Download className="w-4 h-4" /> <span className="hidden sm:inline">Export</span>
                     </button>
+                    <Link to="/add" className="flex items-center gap-2 text-sm font-medium text-white bg-indigo-600 px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors shadow-sm ml-2">
+                      + Add Question
+                    </Link>
                   </div>
                 </div>
-
-                <Dashboard questions={questions} darkMode={darkMode} />
-                
-                <QuestionForm 
-                  onSubmit={editingQuestion ? handleUpdateQuestion : handleAddQuestion} 
-                  initialData={editingQuestion}
-                  onCancel={editingQuestion ? () => setEditingQuestion(null) : null}
-                />
                 
                 <QuestionTable 
                   questions={questions} 
-                  onEdit={setEditingQuestion}
                   onDelete={handleDeleteQuestion}
                   onMarkRevised={handleMarkRevised}
                   onViewMistakes={setViewMistakeQuestion}
+                />
+              </main>
+            </ProtectedRoute>
+          } />
+
+          <Route path="/add" element={
+            <ProtectedRoute authData={authData}>
+              <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+                <QuestionForm 
+                  onSubmit={handleAddQuestion} 
+                />
+              </main>
+            </ProtectedRoute>
+          } />
+
+          <Route path="/edit" element={
+            <ProtectedRoute authData={authData}>
+              <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+                <QuestionForm 
+                  onSubmit={handleUpdateQuestion} 
                 />
               </main>
             </ProtectedRoute>

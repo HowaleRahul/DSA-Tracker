@@ -1,10 +1,14 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { format } from 'date-fns';
 
 const PLATFORMS = ['LeetCode', 'GFG', 'Codeforces', 'Other'];
 const COMMON_TAGS = ['Array', 'String', 'Hash Table', 'Math', 'DP', 'Sorting', 'Greedy', 'DFS', 'Database', 'BFS', 'Tree', 'Binary Search', 'Matrix', 'Two Pointers', 'Bit Manipulation', 'Stack', 'Graph', 'Sliding Window'];
 
-const QuestionForm = ({ onSubmit, initialData = null, onCancel = null }) => {
+const QuestionForm = ({ onSubmit }) => {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const initialData = location.state?.question || null;
   const [formData, setFormData] = useState({
     name: '',
     url: '',
@@ -98,22 +102,14 @@ const QuestionForm = ({ onSubmit, initialData = null, onCancel = null }) => {
       tags: typeof formData.tags === 'string' ? formData.tags.split(',').map(t => t.trim()).filter(t => t !== '') : formData.tags,
       confidence: Number(formData.confidence)
     };
-    onSubmit(payload);
-    if (!initialData) {
-      // Reset form if it's a new entry
-      setFormData({
-        name: '',
-        url: '',
-        platform: 'LeetCode',
-        difficulty: 'Medium',
-        tags: '',
-        approach: '',
-        timeComplexity: '',
-        confidence: 3,
-        lastRevised: format(new Date(), 'yyyy-MM-dd'),
-        mistakes: ''
-      });
+    
+    if (initialData) {
+      onSubmit(payload, initialData._id);
+    } else {
+      onSubmit(payload);
     }
+    
+    navigate('/questions');
   };
 
   return (
@@ -227,12 +223,10 @@ const QuestionForm = ({ onSubmit, initialData = null, onCancel = null }) => {
         </div>
 
         <div className="flex justify-end space-x-3 pt-2">
-          {onCancel && (
-            <button type="button" onClick={onCancel} className="px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 dark:bg-gray-700 dark:text-gray-200 dark:border-gray-600 dark:hover:bg-gray-600">
-              Cancel
-            </button>
-          )}
-          <button type="submit" className="px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+          <button type="button" onClick={() => navigate('/questions')} className="px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 dark:bg-gray-700 dark:text-gray-200 dark:border-gray-600 dark:hover:bg-gray-600 transition-colors">
+            Cancel
+          </button>
+          <button type="submit" className="px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors">
             {initialData ? 'Update Question' : 'Save Question'}
           </button>
         </div>

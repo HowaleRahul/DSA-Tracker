@@ -19,12 +19,23 @@ const Navbar = ({ user, logout, darkMode, toggleDarkMode }) => {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
             </svg>
           </div>
-          <Link to="/" className="text-xl font-bold text-gray-900 dark:text-white">
-            DSA Revision Tracker
+          <Link to="/" className="text-xl font-bold text-gray-900 dark:text-white hidden sm:block">
+            DSA Tracker
           </Link>
         </div>
 
-        <div className="flex items-center gap-4">
+        {user && (
+          <nav className="flex items-center gap-1 sm:gap-4 absolute left-1/2 -translate-x-1/2">
+            <Link to="/" className="px-3 py-2 text-sm font-medium text-gray-600 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-gray-50 dark:hover:bg-gray-700/50 rounded-md transition-colors">
+              Dashboard
+            </Link>
+            <Link to="/questions" className="px-3 py-2 text-sm font-medium text-gray-600 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-gray-50 dark:hover:bg-gray-700/50 rounded-md transition-colors">
+              Questions
+            </Link>
+          </nav>
+        )}
+
+        <div className="flex items-center gap-3">
           <button 
             onClick={toggleDarkMode}
             className="p-2 rounded-full text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-700 transition-colors"
@@ -33,21 +44,30 @@ const Navbar = ({ user, logout, darkMode, toggleDarkMode }) => {
             {darkMode ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
           </button>
           
-          <div className="w-px h-6 bg-gray-200 dark:bg-gray-700 mx-1"></div>
+          <div className="w-px h-6 bg-gray-200 dark:bg-gray-700 mx-1 hidden sm:block"></div>
 
           {user ? (
-            <div className="flex items-center gap-4">
-              <div className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
-                <User className="w-4 h-4" />
-                <span className="font-medium">{user.username}</span>
+            <div className="relative group">
+              <div className="flex items-center gap-2 cursor-pointer p-1 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                <div className="hidden sm:flex flex-col items-end mr-1">
+                  <span className="text-sm font-semibold text-gray-900 dark:text-white">{user.username}</span>
+                </div>
+                <div className="w-9 h-9 rounded-full bg-gradient-to-r from-indigo-500 to-purple-500 flex items-center justify-center text-white font-bold shadow-sm ring-2 ring-white dark:ring-gray-800">
+                  {user.username.charAt(0).toUpperCase()}
+                </div>
               </div>
-              <button 
-                onClick={handleLogout}
-                className="flex items-center gap-1 text-sm text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 transition-colors"
-              >
-                <LogOut className="w-4 h-4" />
-                Logout
-              </button>
+              
+              <div className="absolute right-0 mt-1 w-56 bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-100 dark:border-gray-700 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50 transform origin-top-right scale-95 group-hover:scale-100">
+                <div className="p-4 border-b border-gray-100 dark:border-gray-700">
+                  <p className="text-sm font-bold text-gray-900 dark:text-white truncate">{user.username}</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 truncate mt-0.5">{user.email}</p>
+                </div>
+                <div className="p-2">
+                  <button onClick={handleLogout} className="w-full text-left px-3 py-2.5 text-sm font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg flex items-center gap-2 transition-colors">
+                    <LogOut className="w-4 h-4" /> Sign out
+                  </button>
+                </div>
+              </div>
             </div>
           ) : (
             <div className="flex items-center gap-3">

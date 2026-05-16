@@ -1,5 +1,5 @@
 import React from 'react';
-import { Target, CheckCircle, AlertTriangle, TrendingUp } from 'lucide-react';
+import { Target, CheckCircle, AlertTriangle, TrendingUp, Activity } from 'lucide-react';
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 import { ActivityCalendar } from 'react-activity-calendar';
 import { format, subDays } from 'date-fns';
@@ -153,21 +153,51 @@ const Dashboard = ({ questions, darkMode }) => {
         </div>
       )}
 
-      <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-100 dark:border-gray-700 mt-6 overflow-hidden">
-        <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-4">Contribution Activity</h3>
-        <div className="w-full overflow-x-auto pb-2 custom-scrollbar">
-          <div className="min-w-[800px]">
-            <ActivityCalendar 
-              data={calendarData} 
-              theme={{
-                light: ['#ebedf0', '#9be9a8', '#40c463', '#30a14e', '#216e39'],
-                dark: ['#161b22', '#0e4429', '#006d32', '#26a641', '#39d353'],
-              }}
-              colorScheme={darkMode ? 'dark' : 'light'}
-              labels={{
-                totalCount: '{{count}} contributions in the last year',
-              }}
-            />
+      <div className="bg-white dark:bg-gray-800 rounded-xl p-6 md:p-8 shadow-sm border border-gray-100 dark:border-gray-700 mt-6 overflow-hidden relative group">
+        <div className="absolute top-0 right-0 -mt-10 -mr-10 w-40 h-40 bg-indigo-500/10 dark:bg-indigo-400/5 rounded-full blur-3xl transition-transform group-hover:scale-110"></div>
+        <div className="flex flex-col xl:flex-row gap-8 items-start xl:items-center relative z-10">
+          <div className="xl:w-1/4 w-full">
+            <h3 className="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
+              <Activity className="w-6 h-6 text-indigo-500" />
+              Activity
+            </h3>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mt-2 mb-6">
+              Your dedication and consistency over the past year. Keep it up!
+            </p>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="bg-gray-50 dark:bg-gray-700/50 rounded-xl p-4 border border-gray-100 dark:border-gray-700">
+                <div className="text-3xl font-black text-indigo-600 dark:text-indigo-400">
+                  {Object.keys(activityMap).length}
+                </div>
+                <div className="text-[11px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest mt-1">
+                  Active Days
+                </div>
+              </div>
+              <div className="bg-gray-50 dark:bg-gray-700/50 rounded-xl p-4 border border-gray-100 dark:border-gray-700">
+                <div className="text-3xl font-black text-green-600 dark:text-green-400">
+                  {total}
+                </div>
+                <div className="text-[11px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest mt-1">
+                  Total Solved
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <div className="xl:w-3/4 w-full overflow-x-auto pb-2 custom-scrollbar">
+            <div className="min-w-[800px] flex xl:justify-end">
+              <ActivityCalendar 
+                data={calendarData} 
+                theme={{
+                  light: ['#ebedf0', '#9be9a8', '#40c463', '#30a14e', '#216e39'],
+                  dark: ['#161b22', '#0e4429', '#006d32', '#26a641', '#39d353'],
+                }}
+                colorScheme={darkMode ? 'dark' : 'light'}
+                labels={{
+                  totalCount: '{{count}} contributions in the last year',
+                }}
+              />
+            </div>
           </div>
         </div>
       </div>

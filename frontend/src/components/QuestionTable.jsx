@@ -1,9 +1,11 @@
 import React, { useState, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { format } from 'date-fns';
 import { Edit2, Trash2, CheckCircle2, AlertCircle, Search, Filter, ExternalLink } from 'lucide-react';
 import { calculateNextRevision, needsRevision } from '../utils/dateUtils';
 
-const QuestionTable = ({ questions, onEdit, onDelete, onMarkRevised, onViewMistakes }) => {
+const QuestionTable = ({ questions, onDelete, onMarkRevised, onViewMistakes }) => {
+  const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
   const [filterConfidence, setFilterConfidence] = useState('All');
   const [filterPlatform, setFilterPlatform] = useState('All');
@@ -182,7 +184,7 @@ const QuestionTable = ({ questions, onEdit, onDelete, onMarkRevised, onViewMista
                       <button onClick={() => onMarkRevised(q)} title="Mark as Revised Today" className="text-green-600 hover:text-green-800 dark:hover:text-green-400 transition-colors">
                         <CheckCircle2 className="w-5 h-5" />
                       </button>
-                      <button onClick={() => onEdit(q)} title="Edit" className="text-blue-600 hover:text-blue-800 dark:hover:text-blue-400 transition-colors">
+                      <button onClick={() => navigate('/edit', { state: { question: q } })} title="Edit" className="text-blue-600 hover:text-blue-800 dark:hover:text-blue-400 transition-colors">
                         <Edit2 className="w-4 h-4" />
                       </button>
                       <button onClick={() => onDelete(q._id)} title="Delete" className="text-red-600 hover:text-red-800 dark:hover:text-red-400 transition-colors">
