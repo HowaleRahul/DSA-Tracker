@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { format } from 'date-fns';
+import leetcodeData from '../utils/leetcodeData.json';
 
 const PLATFORMS = ['LeetCode', 'GFG', 'Codeforces', 'Other'];
 const COMMON_TAGS = ['Array', 'String', 'Hash Table', 'Math', 'DP', 'Sorting', 'Greedy', 'DFS', 'Database', 'BFS', 'Tree', 'Binary Search', 'Matrix', 'Two Pointers', 'Bit Manipulation', 'Stack', 'Graph', 'Sliding Window'];
@@ -17,6 +18,20 @@ const QuestionForm = ({ onSubmit, initialData = null, onCancel = null }) => {
     lastRevised: format(new Date(), 'yyyy-MM-dd'),
     mistakes: ''
   });
+  
+  const [suggestions, setSuggestions] = useState([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const wrapperRef = useRef(null);
+
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (wrapperRef.current && !wrapperRef.current.contains(event.target)) {
+        setShowSuggestions(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   useEffect(() => {
     if (initialData) {
@@ -31,6 +46,26 @@ const QuestionForm = ({ onSubmit, initialData = null, onCancel = null }) => {
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
+    
+    if (name === 'name' && value.length > 1) {
+      const matches = leetcodeData.filter(p => p.name.toLowerCase().includes(value.toLowerCase())).slice(0, 5);
+      setSuggestions(matches);
+      setShowSuggestions(true);
+    } else if (name === 'name') {
+      setShowSuggestions(false);
+    }
+  };
+
+  const handleSuggestionClick = (suggestion) => {
+    setFormData(prev => ({
+      ...prev,
+      name: suggestion.name,
+      url: suggestion.url,
+      platform: 'LeetCode',
+      difficulty: suggestion.difficulty,
+      tags: suggestion.tags.join(', ')
+    }));
+    setShowSuggestions(false);
   };
 
   const handleSubmit = (e) => {
@@ -65,10 +100,28 @@ const QuestionForm = ({ onSubmit, initialData = null, onCancel = null }) => {
       </h2>
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
+          <div className="relative" ref={wrapperRef}>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Question Name *</label>
             <input type="text" name="name" required value={formData.name} onChange={handleChange} 
+              onFocus={() => { if (suggestions.length > 0) setShowSuggestions(true); }}
+              autoComplete="off"
               className="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white sm:text-sm px-3 py-2 border" />
+            
+            {showSuggestions && suggestions.length > 0 && (
+              <ul className="absolute z-10 w-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md shadow-lg mt-1 max-h-60 overflow-auto">
+                {suggestions.map((s, idx) => (
+                  <li key={idx} onClick={() => handleSuggestionClick(s)}
+                    className="px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer text-sm text-gray-800 dark:text-gray-200">
+                    <div className="font-medium">{s.name}</div>
+                    <div className="text-xs text-gray-500 flex gap-2 mt-0.5">
+                      <span className={s.difficulty === 'Easy' ? 'text-green-500' : s.difficulty === 'Hard' ? 'text-red-500' : 'text-yellow-500'}>{s.difficulty}</span>
+                      <span>•</span>
+                      <span className="truncate">{s.tags.slice(0,3).join(', ')}</span>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            )}
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Problem URL</label>
