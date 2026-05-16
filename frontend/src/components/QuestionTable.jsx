@@ -8,11 +8,34 @@ const QuestionTable = ({ questions, onEdit, onDelete, onMarkRevised, onViewMista
   const [filterConfidence, setFilterConfidence] = useState('All');
   const [filterPlatform, setFilterPlatform] = useState('All');
   const [filterDifficulty, setFilterDifficulty] = useState('All');
+  const [codeforcesData, setCodeforcesData] = useState([]);
+
+  React.useEffect(() => {
+    fetch('/codeforcesData.json')
+      .then(res => res.json())
+      .then(data => setCodeforcesData(data))
+      .catch(err => console.error("Error loading Codeforces data for URLs:", err));
+  }, []);
 
   const getConfidenceColor = (confidence) => {
     if (confidence <= 2) return 'bg-red-100 text-red-800 border-red-200 dark:bg-red-900/30 dark:text-red-400 dark:border-red-800';
     if (confidence === 3) return 'bg-yellow-100 text-yellow-800 border-yellow-200 dark:bg-yellow-900/30 dark:text-yellow-400 dark:border-yellow-800';
     return 'bg-green-100 text-green-800 border-green-200 dark:bg-green-900/30 dark:text-green-400 dark:border-green-800';
+  };
+
+  const getProblemUrl = (q) => {
+    if (q.url) return q.url;
+    if (q.platform === 'LeetCode') {
+      return `https://leetcode.com/problems/${q.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')}/`;
+    }
+    if (q.platform === 'GFG') {
+      return `https://practice.geeksforgeeks.org/problems/${q.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')}/1`;
+    }
+    if (q.platform === 'Codeforces') {
+      const match = codeforcesData.find(p => p.name.toLowerCase() === q.name.toLowerCase());
+      if (match) return match.url;
+    }
+    return null;
   };
 
   const filteredQuestions = useMemo(() => {
@@ -98,8 +121,8 @@ const QuestionTable = ({ questions, onEdit, onDelete, onMarkRevised, onViewMista
                 <tr key={q._id} className="bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
                   <td className="px-6 py-4">
                     <div className="font-medium text-gray-900 dark:text-white flex items-center gap-2">
-                      {q.url ? (
-                        <a href={q.url} target="_blank" rel="noopener noreferrer" className="hover:text-indigo-500 dark:hover:text-indigo-400 flex items-center gap-1 group">
+                      {getProblemUrl(q) ? (
+                        <a href={getProblemUrl(q)} target="_blank" rel="noopener noreferrer" className="hover:text-indigo-500 dark:hover:text-indigo-400 flex items-center gap-1 group">
                           {q.name}
                           <ExternalLink className="w-3 h-3 text-gray-400 group-hover:text-indigo-500" />
                         </a>

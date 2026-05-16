@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { format } from 'date-fns';
-import leetcodeData from '../utils/leetcodeData.json';
 
 const PLATFORMS = ['LeetCode', 'GFG', 'Codeforces', 'Other'];
 const COMMON_TAGS = ['Array', 'String', 'Hash Table', 'Math', 'DP', 'Sorting', 'Greedy', 'DFS', 'Database', 'BFS', 'Tree', 'Binary Search', 'Matrix', 'Two Pointers', 'Bit Manipulation', 'Stack', 'Graph', 'Sliding Window'];
@@ -19,9 +18,22 @@ const QuestionForm = ({ onSubmit, initialData = null, onCancel = null }) => {
     mistakes: ''
   });
   
+  const [platformData, setPlatformData] = useState([]);
   const [suggestions, setSuggestions] = useState([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const wrapperRef = useRef(null);
+
+  useEffect(() => {
+    Promise.all([
+      fetch('/leetcodeData.json').then(res => res.json()),
+      fetch('/codeforcesData.json').then(res => res.json())
+    ])
+    .then(([leetcode, codeforces]) => {
+      const lc = leetcode.map(p => ({ ...p, platform: 'LeetCode' }));
+      setPlatformData([...lc, ...codeforces]);
+    })
+    .catch(err => console.error("Error loading platform data:", err));
+  }, []);
 
   useEffect(() => {
     function handleClickOutside(event) {
@@ -43,14 +55,26 @@ const QuestionForm = ({ onSubmit, initialData = null, onCancel = null }) => {
     }
   }, [initialData]);
 
+  const updateSuggestions = (nameVal, platformVal) => {
+    if (platformVal !== 'LeetCode' && platformVal !== 'Codeforces') {
+      setShowSuggestions(false);
+      return;
+    }
+    const matches = platformData
+      .filter(p => p.platform === platformVal && p.name.toLowerCase().includes(nameVal.toLowerCase()))
+      .slice(0, 5);
+    setSuggestions(matches);
+    setShowSuggestions(true);
+  };
+
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
     
     if (name === 'name' && value.length > 1) {
-      const matches = leetcodeData.filter(p => p.name.toLowerCase().includes(value.toLowerCase())).slice(0, 5);
-      setSuggestions(matches);
-      setShowSuggestions(true);
+      updateSuggestions(value, formData.platform);
+    } else if (name === 'platform' && formData.name.length > 1) {
+      updateSuggestions(formData.name, value);
     } else if (name === 'name') {
       setShowSuggestions(false);
     }
@@ -61,9 +85,8 @@ const QuestionForm = ({ onSubmit, initialData = null, onCancel = null }) => {
       ...prev,
       name: suggestion.name,
       url: suggestion.url,
-      platform: 'LeetCode',
       difficulty: suggestion.difficulty,
-      tags: suggestion.tags.join(', ')
+      tags: suggestion.tags ? suggestion.tags.join(', ') : ''
     }));
     setShowSuggestions(false);
   };
@@ -100,6 +123,14 @@ const QuestionForm = ({ onSubmit, initialData = null, onCancel = null }) => {
       </h2>
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Platform</label>
+            <select name="platform" value={formData.platform} onChange={handleChange} 
+              className="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white sm:text-sm px-3 py-2 border">
+              {PLATFORMS.map(p => <option key={p} value={p}>{p}</option>)}
+            </select>
+          </div>
+          
           <div className="relative" ref={wrapperRef}>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Question Name *</label>
             <input type="text" name="name" required value={formData.name} onChange={handleChange} 
@@ -115,26 +146,25 @@ const QuestionForm = ({ onSubmit, initialData = null, onCancel = null }) => {
                     <div className="font-medium">{s.name}</div>
                     <div className="text-xs text-gray-500 flex gap-2 mt-0.5">
                       <span className={s.difficulty === 'Easy' ? 'text-green-500' : s.difficulty === 'Hard' ? 'text-red-500' : 'text-yellow-500'}>{s.difficulty}</span>
-                      <span>•</span>
-                      <span className="truncate">{s.tags.slice(0,3).join(', ')}</span>
+                      {s.tags && s.tags.length > 0 && (
+                        <>
+                          <span>•</span>
+                          <span className="truncate">{s.tags.slice(0,3).join(', ')}</span>
+                        </>
+                      )}
                     </div>
                   </li>
                 ))}
               </ul>
             )}
           </div>
+          
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Problem URL</label>
             <input type="url" name="url" placeholder="https://leetcode.com/problems/..." value={formData.url || ''} onChange={handleChange} 
               className="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white sm:text-sm px-3 py-2 border" />
           </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Platform</label>
-            <select name="platform" value={formData.platform} onChange={handleChange} 
-              className="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white sm:text-sm px-3 py-2 border">
-              {PLATFORMS.map(p => <option key={p} value={p}>{p}</option>)}
-            </select>
-          </div>
+          
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Difficulty</label>
             <select name="difficulty" value={formData.difficulty} onChange={handleChange} 
