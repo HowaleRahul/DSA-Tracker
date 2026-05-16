@@ -18,7 +18,10 @@ mongoose.connect(uri)
 
 // Routes
 const questionsRouter = require('./routes/questions');
+const authRouter = require('./routes/auth');
+
 app.use('/api/questions', questionsRouter);
+app.use('/api/auth', authRouter);
 
 app.listen(port, () => {
   console.log(`Server is running on port: ${port}`);

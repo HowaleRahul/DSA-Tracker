@@ -1,28 +1,19 @@
 const router = require('express').Router();
 let Question = require('../models/Question');
+const auth = require('../middleware/auth');
 
-// GET all questions
-router.route('/').get((req, res) => {
-  Question.find()
+// GET all questions for a user
+router.route('/').get(auth, (req, res) => {
+  Question.find({ user: req.user.id })
     .then(questions => res.json(questions))
     .catch(err => res.status(400).json('Error: ' + err));
 });
 
 // POST a new question
-router.route('/').post((req, res) => {
-  const { name, url, platform, difficulty, tags, approach, timeComplexity, confidence, lastRevised, mistakes } = req.body;
-
+router.route('/').post(auth, (req, res) => {
   const newQuestion = new Question({
-    name,
-    url,
-    platform,
-    difficulty,
-    tags,
-    approach,
-    timeComplexity,
-    confidence: Number(confidence),
-    lastRevised: Date.parse(lastRevised),
-    mistakes
+    ...req.body,
+    user: req.user.id
   });
 
   newQuestion.save()
@@ -31,23 +22,31 @@ router.route('/').post((req, res) => {
 });
 
 // GET a specific question
-router.route('/:id').get((req, res) => {
-  Question.findById(req.params.id)
-    .then(question => res.json(question))
+router.route('/:id').get(auth, (req, res) => {
+  Question.findOne({ _id: req.params.id, user: req.user.id })
+    .then(question => {
+      if (!question) return res.status(404).json('Question not found');
+      res.json(question);
+    })
     .catch(err => res.status(400).json('Error: ' + err));
 });
 
 // DELETE a specific question
-router.route('/:id').delete((req, res) => {
-  Question.findByIdAndDelete(req.params.id)
-    .then(() => res.json('Question deleted.'))
+router.route('/:id').delete(auth, (req, res) => {
+  Question.findOneAndDelete({ _id: req.params.id, user: req.user.id })
+    .then(deleted => {
+      if (!deleted) return res.status(404).json('Question not found');
+      res.json('Question deleted.');
+    })
     .catch(err => res.status(400).json('Error: ' + err));
 });
 
 // UPDATE a specific question
-router.route('/:id').put((req, res) => {
-  Question.findById(req.params.id)
+router.route('/:id').put(auth, (req, res) => {
+  Question.findOne({ _id: req.params.id, user: req.user.id })
     .then(question => {
+      if (!question) return res.status(404).json('Question not found');
+      
       question.name = req.body.name;
       question.url = req.body.url;
       question.platform = req.body.platform;
@@ -67,7 +66,7 @@ router.route('/:id').put((req, res) => {
 });
 
 // POST bulk import
-router.route('/bulk').post((req, res) => {
+router.route('/bulk').post(auth, (req, res) => {
   const questions = req.body;
   if (!Array.isArray(questions)) {
     return res.status(400).json('Error: Payload must be an array of questions');
@@ -76,7 +75,7 @@ router.route('/bulk').post((req, res) => {
   // Remove _id from imported items to avoid duplicate key errors, Mongoose will generate new ones
   const sanitizedQuestions = questions.map(q => {
     const { _id, createdAt, updatedAt, __v, ...rest } = q;
-    return rest;
+    return { ...rest, user: req.user.id };
   });
 
   Question.insertMany(sanitizedQuestions)
